@@ -40,6 +40,8 @@ namespace Nito.Async
         /// </summary>
         private ActionDispatcher dispatcher;
 
+        private Action<ActionThread, Exception> exceptionHandler;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ActionThread"/> class, creating a child thread waiting for commands.
         /// </summary>
@@ -49,7 +51,30 @@ namespace Nito.Async
         public ActionThread()
         {
             this.dispatcher = new ActionDispatcher();
+            this.dispatcher.SetExceptionHandler(ExceptionHandler);
             this.thread = new Thread(() => this.dispatcher.Run());
+        }
+
+        private void ExceptionHandler(Exception exception)
+        {
+            var t = exceptionHandler;
+            if (t != null)
+            {
+                t(this, exception);
+            }
+            else
+            {
+                throw exception;
+            }
+        }
+
+        /// <summary>
+        /// Sets the exception handler for the action thread
+        /// </summary>
+        /// <param name="handler">The handler to be called when an exception occurs</param>
+        public void SetExceptionHandler(Action<ActionThread, Exception> handler)
+        {
+            exceptionHandler = handler;
         }
 
         /// <summary>
