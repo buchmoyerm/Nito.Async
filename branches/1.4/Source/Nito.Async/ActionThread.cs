@@ -41,6 +41,11 @@ namespace Nito.Async
         private ActionDispatcher dispatcher;
 
         /// <summary>
+        /// Object for synchronizing (to prevent deadlock)
+        /// </summary>
+        private GenericSynchronizingObject synchronizing = null;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ActionThread"/> class, creating a child thread waiting for commands.
         /// </summary>
         /// <example>The following code sample demonstrates how to create an ActionThread, start it, and then join with it:
@@ -219,10 +224,27 @@ namespace Nito.Async
         /// </example>
         public bool DoSynchronously(Action action, TimeSpan timeout)
         {
-            using (ManualResetEvent evt = new ManualResetEvent(false))
+            var sync = synchronizing ?? (synchronizing = new GenericSynchronizingObject());
+            if (sync.InvokeRequired)
             {
-                this.dispatcher.QueueAction(() => { action(); evt.Set(); });
-                return evt.WaitOne(timeout);
+                using (ManualResetEvent evt = new ManualResetEvent(false))
+                {
+                    this.dispatcher.QueueAction(() =>
+                    {
+                        action();
+                        evt.Set();
+                    });
+                    return evt.WaitOne(timeout);
+                }
+            }
+            else
+            {
+                //if we are currently executing within this thread
+                //then action will never be called and the thread 
+                //will be blocked for the durration of timeout
+                //if timeout is -1 then we are deadlocked
+                action();
+                return true;
             }
         }
 
