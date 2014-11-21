@@ -48,6 +48,8 @@ namespace Nito.Async
         /// </summary>
         private Queue<Action> actionQueue;
 
+        private Action<Exception> exceptionHandler;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ActionDispatcher"/> class with an empty action queue.
         /// </summary>
@@ -79,6 +81,15 @@ namespace Nito.Async
 
                 return context.ActionDispatcher;
             }
+        }
+
+        /// <summary>
+        /// Sets the exception hanlder to be called when an exception is encounted in the action dispatcher
+        /// </summary>
+        /// <param name="handler">Th handler to be called</param>
+        public void SetExceptionHandler(Action<Exception> handler)
+        {
+            this.exceptionHandler = handler;
         }
 
         /// <summary>
@@ -126,6 +137,18 @@ namespace Nito.Async
             }
             catch (ExitException)
             {
+            }
+            catch (Exception ex)
+            {
+                var t = exceptionHandler;
+                if (t != null)
+                {
+                    t(ex);
+                }
+                else
+                {
+                    throw;
+                }
             }
         }
 
