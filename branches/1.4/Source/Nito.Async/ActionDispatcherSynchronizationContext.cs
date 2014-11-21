@@ -30,12 +30,18 @@ namespace Nito.Async
         public ActionDispatcherSynchronizationContext(ActionDispatcher actionDispatcher)
         {
             this.ActionDispatcher = actionDispatcher;
+            threadId = Thread.CurrentThread.ManagedThreadId;
         }
 
         /// <summary>
         /// Gets or sets the action queue for the thread to synchronize with.
         /// </summary>
         internal ActionDispatcher ActionDispatcher { get; set; }
+
+        /// <summary>
+        /// The managed thread id of the synchronization context's specific associated thread, if any.
+        /// </summary>
+        private int? threadId;
 
         /// <summary>
         /// Creates a copy of this <see cref="ActionDispatcherSynchronizationContext"/>.
@@ -68,10 +74,40 @@ namespace Nito.Async
         /// </remarks>
         public override void Send(SendOrPostCallback d, object state)
         {
-            using (ManualResetEvent evt = new ManualResetEvent(false))
+            if (ActionQueueRequired)
             {
-                this.ActionDispatcher.QueueAction(() => { d(state); evt.Set(); });
-                evt.WaitOne();
+                using (ManualResetEvent evt = new ManualResetEvent(false))
+                {
+                    this.ActionDispatcher.QueueAction(() =>
+                    {
+                        d(state);
+                        evt.Set();
+                    });
+                    evt.WaitOne();
+                }
+            }
+            else
+            {
+                d(state);
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating if the thread that the context was created on
+        /// is the same as the current executing thread
+        /// </summary>
+        private bool ActionQueueRequired
+        {
+            get
+            {
+                if (this.threadId != null)
+                {
+                    return this.threadId != Thread.CurrentThread.ManagedThreadId;
+                }
+
+                //if we don't know what thread we are on then assume
+                //the action needs to be queued
+                return true;
             }
         }
     }

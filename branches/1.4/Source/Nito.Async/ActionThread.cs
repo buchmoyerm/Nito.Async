@@ -56,6 +56,9 @@ namespace Nito.Async
         public ActionThread()
         {
             this.dispatcher = new ActionDispatcher();
+            //have this be the first action in the thread
+            //this will then be used to synchronize synchronous calls
+            this.dispatcher.QueueAction(() => synchronizing = new GenericSynchronizingObject());
             this.dispatcher.SetExceptionHandler(ExceptionHandler);
             this.thread = new Thread(() => this.dispatcher.Run());
         }
@@ -249,8 +252,7 @@ namespace Nito.Async
         /// </example>
         public bool DoSynchronously(Action action, TimeSpan timeout)
         {
-            var sync = synchronizing ?? (synchronizing = new GenericSynchronizingObject());
-            if (sync.InvokeRequired)
+            if (synchronizing.InvokeRequired)
             {
                 using (ManualResetEvent evt = new ManualResetEvent(false))
                 {
