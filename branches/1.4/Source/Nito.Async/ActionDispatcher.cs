@@ -48,6 +48,11 @@ namespace Nito.Async
         /// </summary>
         private Queue<Action> actionQueue;
 
+        /// <summary>
+        /// The currently executing action name
+        /// </summary>
+        private string currentActionName = "";
+
         private Action<Exception> exceptionHandler;
 
         /// <summary>
@@ -107,6 +112,8 @@ namespace Nito.Async
             this.actionQueueNotEmptyEvent.Close();
         }
 
+        public string CurrentMethodName { get { return this.currentActionName; } }
+
         /// <summary>
         /// Executes the action queue.
         /// </summary>
@@ -122,7 +129,7 @@ namespace Nito.Async
         /// <example>The following code sample demonstrates how to create an ActionDispatcher, queue an exit action, and run it:
         /// <code source="..\..\Source\Examples\DocumentationExamples\ActionDispatcher\ConstructQueueExitRun.cs"/>
         /// </example>
-        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlPolicy)]
+        [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlPolicy)]
         public void Run()
         {
             try
@@ -132,7 +139,10 @@ namespace Nito.Async
                 while (true)
                 {
                     // Dequeue and run an action
-                    this.DequeueAction()();
+                    var curAction = this.DequeueAction();
+                    this.currentActionName = curAction.Method.Name;
+                    curAction();
+                    //this.DequeueAction()();
                 }
             }
             catch (ExitException)
