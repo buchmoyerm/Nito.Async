@@ -63,6 +63,8 @@ namespace Nito.Async
             this.thread = new Thread(() => this.dispatcher.Run());
         }
 
+        public string MethodName { get { return this.dispatcher.CurrentMethodName; } }
+
         private void ExceptionHandler(Exception exception)
         {
             var t = exceptionHandler;
