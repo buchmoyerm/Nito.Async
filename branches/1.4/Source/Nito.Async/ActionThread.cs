@@ -254,7 +254,7 @@ namespace Nito.Async
         /// </example>
         public bool DoSynchronously(Action action, TimeSpan timeout)
         {
-            if (synchronizing.InvokeRequired)
+            if (synchronizing == null || synchronizing.InvokeRequired)
             {
                 using (ManualResetEvent evt = new ManualResetEvent(false))
                 {
