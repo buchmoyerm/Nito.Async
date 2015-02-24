@@ -236,6 +236,14 @@ namespace Nito.Async
         }
 
         /// <summary>
+        /// Represents the number of actions waiting to be executed by the thread
+        /// </summary>
+        public int ActionAcount
+        {
+            get { return this.dispatcher.QueueCount; }
+        }
+
+        /// <summary>
         /// Queues work for the <see cref="ActionThread"/> to do, and blocks the calling thread until it is complete or until the specified time has elapsed.
         /// </summary>
         /// <param name="action">The work to do. This delegate may not throw an exception.</param>

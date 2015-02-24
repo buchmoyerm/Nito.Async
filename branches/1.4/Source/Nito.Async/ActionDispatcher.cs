@@ -2,6 +2,8 @@
 //     Copyright (c) 2009 Nito Programs.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace Nito.Async
 {
     using System;
@@ -112,7 +114,18 @@ namespace Nito.Async
             this.actionQueueNotEmptyEvent.Close();
         }
 
+        /// <summary>
+        /// The currently executing action name
+        /// </summary>
         public string CurrentMethodName { get { return this.currentActionName; } }
+
+        /// <summary>
+        /// Returns the number of actions queue and waiting to be executed
+        /// </summary>
+        public int QueueCount
+        {
+            get { return actionQueue.Count; }
+        }
 
         /// <summary>
         /// Executes the action queue.
